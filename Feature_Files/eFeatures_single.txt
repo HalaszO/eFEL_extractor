@@ -1,0 +1,7 @@
+steady_state_voltage
+ISI_log_slope
+decay_time_constant_after_stim 
+APlast_amp
+AP2_amp
+voltage_base
+AP1_amp

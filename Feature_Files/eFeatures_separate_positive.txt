@@ -1,0 +1,16 @@
+Spikecount
+AP1_amp
+AP2_amp
+ISI_CV
+APlast_amp
+inv_first_ISI
+inv_second_ISI
+inv_third_ISI
+inv_fourth_ISI
+inv_fifth_ISI
+inv_last_ISI
+adaptation_index2
+time_to_last_spike
+inv_time_to_first_spike
+mean_frequency
+number_initial_spikes

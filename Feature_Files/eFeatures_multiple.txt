@@ -1,0 +1,15 @@
+AP_height
+AHP_depth_abs
+AHP_depth_abs_slow
+AHP_slow_time 
+AP_width 
+AP_amplitude 
+AP_duration_half_width 
+AHP_depth
+fast_AHP
+AHP_time_from_peak
+AP_begin_voltage
+AP_rise_time
+AP_fall_time
+AP_rise_rate
+AP_fall_rate
