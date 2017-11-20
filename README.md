@@ -4,3 +4,6 @@ Input: the membrane voltage data in ASCII-coded columnar files (the columns corr
 Output: the summarized feature values for each measurement/cell in a text file. The extracted features are categorized into a group of five: features with originally multiple return values (e.g. AP_amplitude), single-value features, single-value features for negative sweeps and two feature files for given negative and positive (default: -100 pA, 400 pA and 600 pA) current sweeps.
 The experiment protocol (time and current values) can be changed via the code. 
 Prequisites: a UNIX-based operating system (the code was written in Linux), the eFEL and Tkinter libs.
+
+Update(11/20/2017):
+The 'feature file' reading is currently unavailable due to technical issues with type compatibility. Please edit the list of features through the code for the time being.
