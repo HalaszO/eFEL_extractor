@@ -2,6 +2,7 @@ import numpy
 import math
 import os
 import efel
+import collections as cs
 import tkinter as tk
 from tkinter import filedialog
 
@@ -44,24 +45,50 @@ def extract_cell_id(fstring, sep_begin, sep_end):
     return ident
 
 
+def value_Checker(feature_values):
+    if feature_values is None:
+        feat_val = 0
+    elif not feature_values:
+        feat_val = 0
+    elif feature_values == 0:
+        feat_val = 0
+    elif (feature_values == math.nan) or (feature_values == float('nan')) or math.isnan(feature_values):
+        feat_val = 0
+    elif feature_values == float('inf'):
+        feat_val = 0
+    else:
+        feat_val = feature_values
+    return feat_val
+
+
 def main():
     """Main"""
 
-    files_path = fileselect('Choose data files', 1,
-                            "/media/sf_Shared_downloads/HBP_data/Unknown/STEP_LONG")
+    #files_path = fileselect('Choose data files', 1, "/media/sf_Shared_downloads/HBP_data/Unknown/STEP_LONG")
     #files_path = fileselect('Choose data files', 1,
     #                      "/media/sf_Shared_downloads/mobile_taxonomy_170410/mobile_taxonomy/HEKAdata/zsolt/CCK_Population/Selected")
+    # feature_names_single = sorted(numpy.genfromtxt("/media/sf_Shared_downloads/Feature_Files/eFeatures_single.txt", dtype='str'))
+    # feature_names_single_neg = numpy.genfromtxt("/media/sf_Shared_downloads/Feature_Files/eFeatures_single_negative.txt", dtype='str')
+    # feature_names_multiple = sorted(numpy.genfromtxt("/media/sf_Shared_downloads/Feature_Files/eFeatures_multiple.txt", dtype='str'))
+    # feature_names_pos= sorted(numpy.genfromtxt("/media/sf_Shared_downloads/Feature_Files/eFeatures_separate_positive.txt", dtype='str'))
+    # feature_names_neg = sorted(numpy.genfromtxt("/media/sf_Shared_downloads/Feature_Files/eFeatures_separate_negative.txt", dtype='str'))
 
-    # feature_names_single = featureselect('Choose single feature file')
-    feature_names_single = numpy.genfromtxt("/media/sf_Shared_downloads/Feature_Files/eFeatures_single.txt", dtype='str')
-    #feature_names_single_neg = numpy.genfromtxt("/media/sf_Shared_downloads/Feature_Files/eFeatures_single_negative.txt", dtype='str')
+
+    feature_names_single  = sorted(['steady_state_voltage', 'ISI_log_slope','decay_time_constant_after_stim', 'APlast_amp','AP2_amp','voltage_base','AP1_amp'])
     feature_names_single_neg = ['time_constant']
-    feature_names_multiple = numpy.genfromtxt("/media/sf_Shared_downloads/Feature_Files/eFeatures_multiple.txt", dtype='str')
-    feature_names_pos= numpy.genfromtxt("/media/sf_Shared_downloads/Feature_Files/eFeatures_separate_positive.txt", dtype='str')
-    feature_names_neg = numpy.genfromtxt("/media/sf_Shared_downloads/Feature_Files/eFeatures_separate_negative.txt", dtype='str')
 
+    feature_names_multiple = sorted(['AP_height','AHP_depth_abs', 'AHP_depth_abs_slow', 'AHP_slow_time',
+                              'AP_width', 'AP_amplitude','AP_duration_half_width', 'AHP_depth',
+                            'fast_AHP', 'AHP_time_from_peak', 'AP_begin_voltage','AP_rise_time','AP_fall_time', 'AP_rise_rate', 'AP_fall_rate'])
 
-    save_location = "/media/sf_Shared_downloads/HBP_data/eFEL processed/Unknown/STEP_LONG"
+    feature_names_pos = sorted(['Spikecount', 'AP1_amp', 'AP2_amp', 'ISI_CV', 'APlast_amp', 'inv_first_ISI', 'inv_second_ISI', 'inv_third_ISI',
+                                'inv_fourth_ISI', 'inv_fifth_ISI', 'inv_last_ISI', 'adaptation_index2', 'time_to_last_spike', 'inv_time_to_first_spike','mean_frequency', 'number_initial_spikes'])
+    feature_names_neg = sorted(['voltage_deflection_begin', 'voltage_deflection'])
+
+    files_path = fileselect('Choose data files', 1, "/media/sf_Shared_downloads/HBP_data_grouped")
+
+    #save_location = "/media/sf_Shared_downloads/HBP_data/eFEL processed/Unknown/STEP_LONG"
+    save_location = "/media/sf_Shared_downloads/Test/HBP_data_grouped/eFEL_processed/OTHER/HBP"
     if not os.path.exists(save_location):
         os.makedirs(save_location)
 
@@ -72,9 +99,9 @@ def main():
     # Using LONG_STEP protocol:
     # 27 steps, 200 ms baseline, 800ms stimulus, 400 ms baseline, 1000 ms break between steps
     # STEP LONG:
-    current_val = [10, -10, 20, -20, 30, -30, 40, -40, 50, -50, 60, -60, 70, -70, 80, -80, 90, -90, 100, -100, 150, 200, 250, 300, 400, 500, 600]
+    #current_val = [10, -10, 20, -20, 30, -30, 40, -40, 50, -50, 60, -60, 70, -70, 80, -80, 90, -90, 100, -100, 150, 200, 250, 300, 400, 500, 600]
     # STEP HBP:
-    #current_val = [ 20, -20, 40, -40, 60, -60, 80, -80, 100, -100, 120, -120, 140, -140, 160, -160, 180, -180, 200, 220, 240, 260, 280, 300, 400, 500, 600]
+    current_val = [ 20, -20, 40, -40, 60, -60, 80, -80, 100, -100, 120, -120, 140, -140, 160, -160, 180, -180, 200, 220, 240, 260, 280, 300, 400, 500, 600]
 
     # The required number of sampling points during
     Exp_datapoints = 7000
@@ -111,15 +138,16 @@ def main():
     fnreobase = []
     for f in feature_names_multiple:
         fnreobase.append(f + "_rheobase")
-    feature_header = ['Number', 'CellID'] + \
-                     sorted(fnsingle) + \
+
+    feature_header = ['CellID'] + \
+                     fnsingle + \
                      ['RheobaseSweep','SteadySweep']+ \
-                     feature_names_single_neg + \
-                     sorted(fnreobase) + \
-                     sorted(fnsteady) + \
-                     sorted(fnpos1) + \
-                     sorted(fnpos2) + \
-                     sorted(fnneg)
+                     feature_names_single_neg +\
+                     fnreobase + \
+                     fnsteady + \
+                    fnpos1 + \
+                    fnpos2 + \
+                    fnneg
 
 
     print("\t".join(feature_header), file=data_file)
@@ -211,27 +239,20 @@ def main():
         # Features which contain 1 value for a single sweep
         # In the summary, the results are the averaged values for each sweep
 
+
         mean_results_s = {}
         for feature_name in feature_names_single:
             mean_results_s[feature_name] = []
 
         for trace_results in traces_results_s:
-            for feature_name, feature_valuess in trace_results.items():
-                if feature_valuess is not None:
+            trace_results2 = cs.OrderedDict(sorted(trace_results.items()))
+            for feature_name, feature_valuess in trace_results2.items():
+                if (feature_valuess is not None) and len(feature_valuess):
                     for feature_values in feature_valuess:
-                        if feature_values is None:
-                            feat_val = 0
-                        elif not feature_values:
-                            feat_val = 0
-                        elif feature_values == 0:
-                            feat_val = 0
-                        elif (feature_values == math.nan) or (feature_values == float('nan')) or math.isnan(feature_values):
-                            feat_val = 0
-                        else:
-                            feat_val = feature_values
+                        feat_val = value_Checker(feature_values)
                         mean_results_s[feature_name].append(feat_val)
-                #else:
-                #    mean_results_s[feature_name].append(0)
+                else:
+                    mean_results_s[feature_name].append(0)
 
         for feature_name, feature_values in mean_results_s.items():
             smmr = 0.0
@@ -257,22 +278,14 @@ def main():
         traces_results_s_neg = [traces_results_s_neg[ind] for ind in negativeIndices]
 
         for trace_results in traces_results_s_neg:
-            for feature_name, feature_valuess in trace_results.items():
-                if feature_valuess is not None:
+            trace_results2 = cs.OrderedDict(sorted(trace_results.items()))
+            for feature_name, feature_valuess in trace_results2.items():
+                if (feature_valuess is not None) and len(feature_valuess):
                     for feature_values in feature_valuess:
-                        if feature_values is None:
-                            feat_val = 0
-                        elif not feature_values:
-                            feat_val = 0
-                        elif feature_values == 0:
-                            feat_val = 0
-                        elif (feature_values == math.nan) or (feature_values == float('nan')) or math.isnan(feature_values):
-                            feat_val = 0
-                        else:
-                            feat_val = feature_values
+                        feat_val = value_Checker(feature_values)
                         mean_results_s_neg[feature_name].append(feat_val)
-                #else:
-                #    mean_results_s_neg[feature_name].append(0)
+                else:
+                   mean_results_s_neg[feature_name].append(0)
 
         for feature_name, feature_values in mean_results_s_neg.items():
             smmr = 0.0
@@ -299,8 +312,9 @@ def main():
 
 
         for trace_results in traces_results_m:
-            for feature_name, feature_values in trace_results.items():
-                if feature_values is not None:
+            trace_results2 = cs.OrderedDict(sorted(trace_results.items()))
+            for feature_name, feature_values in trace_results2.items():
+                if (feature_values is not None) and len(feature_values):
                     cntr = 0
                     smmr = 0.0
                     for el in feature_values:
@@ -325,16 +339,13 @@ def main():
 
         mean_results_m_reobase = {}
         for feature_name, feature_values in mean_results_m.items():
-            for feat_val in feature_values:
-                if(feat_val != 0):
-                    mean_results_m_reobase[feature_name] = feat_val
-                    break
+            mean_results_m_reobase[feature_name] = feature_values[rheobaseSweep]
 
         mean_results_m_steady = {}
         for feature_name, feature_values in mean_results_m.items():
             mean_results_m_steady[feature_name] = feature_values[steadySweep]
 
-        #SOMETHING'S NOT RIGHT HERE
+
 
         # "Separate/extra" features, aka feature response values for a certain current step
         # These are all single-value-per-sweep features
@@ -343,72 +354,57 @@ def main():
         for feature_name in feature_names_pos:
             feature_name = feature_name + "_" + str(current_val[currentIndPos1])
             posCurrentResults1[feature_name] = []
+
         trace_results = traces_results_pos[currentIndPos1]
-        for feature_name, feature_valuess in trace_results.items():
-            if feature_valuess is not None:
+        trace_results2 = cs.OrderedDict(sorted(trace_results.items()))
+
+        for feature_name, feature_valuess in trace_results2.items():
+            feature_name = feature_name + "_" + str(current_val[currentIndPos1])
+            if (feature_valuess is not None) and len(feature_valuess):
                 for feature_values in feature_valuess:
-                    if feature_values is None:
-                        feat_val = 0
-                    elif not feature_values:
-                        feat_val = 0
-                    elif feature_values == 0:
-                        feat_val = 0
-                    elif (feature_values == math.nan) or (feature_values == float('nan')) or math.isnan(feature_values):
-                        feat_val = 0
-                    else:
-                        feat_val = feature_values
-                    feature_name = feature_name + "_" + str(current_val[currentIndPos1])
+                    feat_val = value_Checker(feature_values)
                     posCurrentResults1[feature_name] = feat_val
-            #else:
-            #    posCurrentResults1[feature_name] = 0
+            else:
+                posCurrentResults1[feature_name] = 0
+
 
         posCurrentResults2 = {}
         for feature_name in feature_names_pos:
             feature_name = feature_name + "_" + str(current_val[currentIndPos2])
             posCurrentResults2[feature_name] = []
+
         trace_results = traces_results_pos[currentIndPos2]
-        for feature_name, feature_valuess in trace_results.items():
-            if feature_valuess is not None:
+        trace_results2 = cs.OrderedDict(sorted(trace_results.items()))
+
+        for feature_name, feature_valuess in trace_results2.items():
+            feature_name = feature_name + "_" + str(current_val[currentIndPos2])
+            if (feature_valuess is not None) and len(feature_valuess):
                 for feature_values in feature_valuess:
-                    if feature_values is None:
-                        feat_val = 0
-                    elif not feature_values:
-                        feat_val = 0
-                    elif feature_values == 0:
-                        feat_val = 0
-                    elif (feature_values == math.nan) or (feature_values == float('nan')) or math.isnan(feature_values):
-                        feat_val = 0
-                    else:
-                        feat_val = feature_values
-                    feature_name = feature_name + "_" + str(current_val[currentIndPos2])
+                    feat_val = value_Checker(feature_values)
                     posCurrentResults2[feature_name] = feat_val
-            #else:
-            #    posCurrentResults2[feature_name] = 0
+            else:
+                posCurrentResults2[feature_name] = 0
+
 
         negCurrentResults = {}
         for feature_name in feature_names_neg:
             feature_name = feature_name + "_" + str(current_val[currentIndNeg])
             negCurrentResults[feature_name] = []
-        trace_results = traces_results_neg[currentIndNeg]
-        for feature_name, feature_valuess in trace_results.items():
-            if feature_valuess is not None:
-                for feature_values in feature_valuess:
-                    if feature_values is None:
-                        feat_val = 0
-                    elif not feature_values:
-                        feat_val = 0
-                    elif feature_values == 0:
-                        feat_val = 0
-                    elif (feature_values == math.nan) or (feature_values == float('nan')) or math.isnan(feature_values):
-                        feat_val = 0
-                    else:
-                        feat_val = feature_values
-                    feature_name = feature_name + "_" + str(current_val[currentIndNeg])
-                    negCurrentResults[feature_name] = feat_val
-            #else:
-            #    negCurrentResults[feature_name] = 0
 
-        dataarray = [str(filecounter), cellID]
+        trace_results = traces_results_neg[currentIndNeg]
+        trace_results2 = cs.OrderedDict(sorted(trace_results.items()))
+
+        for feature_name, feature_valuess in trace_results2.items():
+            feature_name = feature_name + "_" + str(current_val[currentIndNeg])
+            if (feature_valuess is not None) and len(feature_valuess):
+                for feature_values in feature_valuess:
+                    feat_val = value_Checker(feature_values)
+
+                    negCurrentResults[feature_name] = feat_val
+            else:
+                negCurrentResults[feature_name] = 0
+
+        dataarray = [cellID]
         #print(str(filecounter) + ";" + cellID + ";", file=data_file)
         for feature_name, feature_values in sorted(mean_results_s.items()):
             dataarray.append(str(feature_values))
